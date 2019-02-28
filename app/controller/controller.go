@@ -6,5 +6,5 @@ import (
 
 // Controller ...
 type Controller struct {
-	WeChet *wechat.WeChat // 微信控制器
+	WeChet wechat.WeChat // 微信控制器
 }
