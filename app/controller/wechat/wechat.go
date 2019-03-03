@@ -174,7 +174,30 @@ func messageWithEventHandler(msg message.MixMessage) *message.Reply {
 
 // Test 执行测试任务
 func (w *WeChat) Test(c *gin.Context) {
-
+	db := new(config.DB)
+	engine, err := db.NewEngine()
+	if err != nil {
+		fmt.Println(err)
+		x := fmt.Sprintf("%s", err)
+		c.JSON(200, gin.H{"errCode": "error", "info": "new engine error " + x})
+		return
+	}
+	dbPlatforms := new(PlatformsInfo)
+	err = engine.Sync2(dbPlatforms)
+	if err != nil {
+		x := fmt.Sprintf("%s", err)
+		c.JSON(200, gin.H{"errCode": "error", "info": "engine Sync2 error " + x})
+		return
+	}
+	bool, err := engine.Where("appid=?", c.Request.FormValue("appid")).Get(dbPlatforms)
+	if err != nil {
+		c.JSON(200, gin.H{"errCode": "error", "info": "engine.Where error"})
+		return
+	} else if !bool {
+		c.JSON(200, gin.H{"errCode": "error", "info": "not find appid"})
+		return
+	}
+	c.JSON(200, gin.H{"errCode": "success", "name": dbPlatforms.Name, "uuid": dbPlatforms.UUID})
 }
 
 // AuthEvent 授权事件接收URL
