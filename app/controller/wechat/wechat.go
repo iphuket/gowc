@@ -4,6 +4,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
+	"github.com/iphuket/gowc/app/model"
+
 	"github.com/iphuket/gowc/config"
 
 	"github.com/iphuket/wechat/cache"
@@ -43,7 +46,53 @@ var cfg = &wechat.Config{
 
 // AuthCall ... 授权后回调地址
 func (w *WeChat) AuthCall(c *gin.Context) {
-
+	db := new(config.DB)
+	engine, err := db.NewEngine()
+	if err != nil {
+		fmt.Println(err)
+		x := fmt.Sprintf("%s", err)
+		c.JSON(200, gin.H{"errCode": "error", "info": "new engine error " + x})
+		return
+	}
+	dbPlatforms := new(model.WeChat)
+	err = engine.Sync2(dbPlatforms)
+	if err != nil {
+		x := fmt.Sprintf("%s", err)
+		c.JSON(200, gin.H{"errCode": "error", "info": "engine Sync2 error " + x})
+		return
+	}
+	ctx := new(context.Context)
+	// 必须先设置 ComponentAccessToken()
+	_, err = ctx.GetComponentAccessToken()
+	if err != nil {
+		fmt.Println(err, "下一步正在进行 获取 ctv")
+		cvt := componentverifyticket()
+		_, err := ctx.SetComponentAccessToken(cvt)
+		if err != nil {
+			fmt.Println(err, "设置ComponentAccessToken 错误")
+			return
+		}
+	}
+	ac := c.Request.FormValue("auth_code")
+	if len(ac) < 1 {
+		fmt.Println("not find auth_code")
+		c.Writer.WriteString("not find auth_code")
+		return
+	}
+	abi, err := ctx.QueryAuthCode(ac)
+	dbPlatforms.UUID = uuid.New().String()
+	dbPlatforms.AppID = abi.Appid
+	dbPlatforms.Name = "财湘俱乐部"
+	dbPlatforms.AccessToken = abi.AccessToken
+	dbPlatforms.RefreshToken = abi.RefreshToken
+	dbPlatforms.ExpiresIn = abi.ExpiresIn
+	_, err = engine.Insert(dbPlatforms)
+	if err != nil {
+		x := fmt.Sprintf("%s", err)
+		c.JSON(200, gin.H{"errCode": "error", "info": "Insert error " + x})
+		return
+	}
+	c.JSON(200, gin.H{"errCode": "success", "AppID": dbPlatforms.AppID})
 }
 
 // AuthURL ... 授权地址
