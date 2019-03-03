@@ -13,8 +13,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/iphuket/wechat"
-	"github.com/iphuket/wechat/context"
 	"github.com/iphuket/wechat/message"
+	"github.com/iphuket/wechat/platforms"
 )
 
 // WeChat 控制器
@@ -61,31 +61,37 @@ func (w *WeChat) AuthCall(c *gin.Context) {
 		c.JSON(200, gin.H{"errCode": "error", "info": "engine Sync2 error " + x})
 		return
 	}
-	ctx := new(context.Context)
-	// 必须先设置 ComponentAccessToken()
-	_, err = ctx.GetComponentAccessToken()
-	if err != nil {
-		fmt.Println(err, "下一步正在进行 获取 ctv")
-		cvt := componentverifyticket()
-		_, err := ctx.SetComponentAccessToken(cvt)
-		if err != nil {
-			fmt.Println(err, "设置ComponentAccessToken 错误")
-			return
-		}
-	}
-	ac := c.Request.FormValue("auth_code")
-	if len(ac) < 1 {
-		fmt.Println("not find auth_code")
-		c.Writer.WriteString("not find auth_code")
+	// 获取 component_verify_ticket
+	cvt := componentverifyticket()
+	if cvt == "" {
+		fmt.Println("获取不到缓存中的 component_verify_ticket")
+		c.Writer.WriteString("获取不到缓存中的 component_verify_ticket")
 		return
 	}
-	abi, err := ctx.QueryAuthCode(ac)
+
+	resComponentAccessToken, err := platforms.ComponentAccessToken(cfg.AppID, cfg.AppSecret, cvt)
+	if err != nil {
+		fmt.Println(err)
+		c.Writer.WriteString("获取 ComponentAccessToken 出现错误, 错误信息：" + resComponentAccessToken.ErrMsg)
+		return
+	}
+
+	abi, err := platforms.AuthBaseInfo(cfg.AppID, resComponentAccessToken.ComponentAccessToken, c.Request.FormValue("auth_code"))
+	if err != nil {
+		c.Writer.WriteString("platforms.AuthBaseInfo error ")
+		fmt.Println(err)
+		return
+	}
+	if len(abi.ErrMsg) > 0 {
+		c.Writer.WriteString("获取 AuthBaseInfo 出现错误, 错误信息：" + abi.ErrMsg)
+		return
+	}
 	dbPlatforms.UUID = uuid.New().String()
-	dbPlatforms.AppID = abi.Appid
+	dbPlatforms.AppID = abi.AuthorizationInfo.AuthorizerAppID
 	dbPlatforms.Name = "财湘俱乐部"
-	dbPlatforms.AccessToken = abi.AccessToken
-	dbPlatforms.RefreshToken = abi.RefreshToken
-	dbPlatforms.ExpiresIn = abi.ExpiresIn
+	dbPlatforms.AccessToken = abi.AuthorizationInfo.AuthorizerAccessToken
+	dbPlatforms.RefreshToken = abi.AuthorizationInfo.AuthorizerRefreshToken
+	dbPlatforms.ExpiresIn = abi.AuthorizationInfo.ExpiresIn
 	_, err = engine.Insert(dbPlatforms)
 	if err != nil {
 		x := fmt.Sprintf("%s", err)
@@ -97,28 +103,31 @@ func (w *WeChat) AuthCall(c *gin.Context) {
 
 // AuthURL ... 授权地址
 func (w *WeChat) AuthURL(c *gin.Context) {
-	ctx := new(context.Context)
-	// 获取预授权码 必须先设置 ComponentAccessToken()
-	_, err := ctx.GetComponentAccessToken()
-	if err != nil {
-		fmt.Println(err, "下一步正在进行 获取 ctv")
-		cvt := componentverifyticket()
-		_, err := ctx.SetComponentAccessToken(cvt)
-		if err != nil {
-			fmt.Println(err, "设置ComponentAccessToken 错误")
-			return
-		}
-	}
-	PreCode, err := ctx.GetPreCode()
-	if err != nil {
-		fmt.Println(err)
-		c.Writer.WriteString("GetPreCode() error")
+	// 获取 component_verify_ticket
+	cvt := componentverifyticket()
+	if cvt == "" {
+		fmt.Println("获取不到缓存中的 component_verify_ticket")
+		c.Writer.WriteString("获取不到缓存中的 component_verify_ticket")
 		return
 	}
-	URL := fmt.Sprintf(ComponentloginPageURL, cfg.AppID, PreCode, RedirectURL)
+
+	resComponentAccessToken, err := platforms.ComponentAccessToken(cfg.AppID, cfg.AppSecret, cvt)
+	if err != nil {
+		fmt.Println(err)
+		c.Writer.WriteString("获取 ComponentAccessToken 出现错误, 错误信息：" + resComponentAccessToken.ErrMsg)
+		return
+	}
+
+	resPreAuthCode, err := platforms.PreAuthCode(cfg.AppID, resComponentAccessToken.ComponentAccessToken)
+	if err != nil {
+		fmt.Println(err)
+		c.Writer.WriteString("获取 PreAuthCode 出现错误, 错误信息：" + resPreAuthCode.ErrMsg)
+		return
+	}
+
+	URL := fmt.Sprintf(platforms.AuthURL, cfg.AppID, resPreAuthCode.PreAuthCode, RedirectURL)
 	c.Header("Content-Type", "text/html; charset=utf-8")
 	c.String(200, "<a href='"+URL+"'>点击授权</a>")
-
 }
 
 // MessageWithEvent ... 消息与事件接收url

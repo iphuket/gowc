@@ -12,7 +12,3 @@ func Start() {
 	GinApp.Use(middleware.GOWC)
 	router.WEB(GinApp)
 }
-
-// Gowc ...
-type Gowc struct {
-}

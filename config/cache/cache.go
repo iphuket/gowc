@@ -12,8 +12,8 @@ type Cache struct {
 }
 
 const (
-	setURL = "http://202.182.118.203:5645/set?key=%s&value=%s"
-	getURL = "http://202.182.118.203:5645/get?key=%s"
+	setURL = "http://am.jyacad.cc:5645/set?key=%s&value=%s"
+	getURL = "http://am.jyacad.cc:5645/get?key=%s"
 )
 
 // Set 设置缓存
