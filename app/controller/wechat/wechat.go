@@ -23,7 +23,7 @@ type WeChat struct {
 
 // 接口信息
 const (
-	RedirectURL           = "http://am.jyacad.cc/wechat/public/account/auth_call"
+	RedirectURL           = "http:///gowc.iuu.pub/wechat/public/account/auth_call"
 	ComponentloginPageURL = "https://mp.weixin.qq.com/cgi-bin/componentloginpage?component_appid=%s&pre_auth_code=%s&redirect_uri=%s&auth_type=3"
 )
 
@@ -33,7 +33,7 @@ var memCache = cache.NewMemcache("127.0.0.1:11211")
 var ca = new(config.Cache)
 
 var aesKey = "MY4tM5jSFLlTj8l35cf"
-var authRedirectURL = "http://am.oovmi.com/wechat/public/account/auth_call"
+var authRedirectURL = "http://gowc.iuu.pub/wechat/public/account/auth_call"
 
 //配置微信参数
 var cfg = &wechat.Config{
