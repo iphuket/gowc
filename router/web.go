@@ -27,6 +27,8 @@ func WEB(app *gin.Engine) {
 		rlt.Any("updataimage", lt.UpdataImage)
 		rlt.Any("registertask", lt.RegisterTask)
 		rlt.Any("checkstate", lt.CheckState)
+		// https://gowc.iuu.pub/leifengtrend/img/
+		rlt.StaticFS("img", gin.Dir("./img", true))
 	}
 	go app.RunTLS(":443", "./1885284_gowc.iuu.pub.pem", "./1885284_gowc.iuu.pub.key")
 	app.Run(":80")

@@ -1,9 +1,10 @@
 package leifengtrend
 
 import (
+	"encoding/base64"
 	"fmt"
-
-	"github.com/google/uuid"
+	"io/ioutil"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/iphuket/gowc/config"
@@ -111,7 +112,7 @@ func (lt *LeifengTrend) WeChatLoginCall(c *gin.Context) {
 		return
 	}
 	// 防止重复注册 需要先查询
-	bool, err := engine.Where("openid", userInfo.OpenID).And("config_uuid", "77a3460a-668c-4145-b20e-2e5dce7dae81").Get(user)
+	bool, err := engine.Where("uuid=?", userInfo.OpenID).Get(user)
 	if err != nil {
 		x := fmt.Sprintf("%s", err)
 		c.JSON(200, gin.H{"errCode": "error", "info": "engine.Where error " + x})
@@ -122,7 +123,7 @@ func (lt *LeifengTrend) WeChatLoginCall(c *gin.Context) {
 		return
 	}
 	// 不存在进行注册后跳转
-	user.UUID = uuid.New().String()
+	user.UUID = userInfo.OpenID
 	user.ConfigUUID = "77a3460a-668c-4145-b20e-2e5dce7dae81"
 	user.OpenID = userInfo.OpenID
 	user.NickName = userInfo.NickName
@@ -169,24 +170,28 @@ func (lt *LeifengTrend) CheckState(c *gin.Context) {
 	}
 	// 查询用户状态
 	// c.Writer.WriteString(resBody.UUID)
-	bool, err := engine.Where("lf_user_uuid", resBody.UUID).And("config_uuid", "77a3460a-668c-4145-b20e-2e5dce7dae81").Get(ld)
+	bool, err := engine.Where("uuid=?", resBody.UUID).Get(ld)
 	if err != nil {
 		x := fmt.Sprintf("%s", err)
 		c.JSON(200, gin.H{"errCode": "error", "info": "engine.Where error " + x})
 		return
 	} else if bool {
 		// 存在任务 继续检查是否已经完成
-		if len(ld.ImageData) > 0 {
+		bool, err = pathExists("./img/" + resBody.UUID + ".jpg")
+		if err == nil && bool {
 			// 已经完成
-			c.JSON(200, gin.H{"errCode": "success", "state": 2, "task": ld.Task, "image": ld.ImageData})
+			fmt.Println(err)
+			c.JSON(200, gin.H{"errCode": "success", "state": 2, "task": ld.Task, "image": "https://gowc.iuu.pub/leifengtrend/img/" + resBody.UUID + ".jpg"})
 			return
 		}
 		// 没有完成完成
+		fmt.Println(err)
 		c.JSON(200, gin.H{"errCode": "success", "state": 1, "task": ld.Task})
 		return
+
 	}
 	// 没有领取任务
-	c.JSON(200, gin.H{"errCode": "success", "state": 0})
+	c.JSON(200, gin.H{"errCode": "success", "state": 0, "o": ld.UUID})
 
 }
 
@@ -218,7 +223,7 @@ func (lt *LeifengTrend) RegisterTask(c *gin.Context) {
 	}
 
 	// lf  谨慎重复注册 lf_user_uuid
-	bool, err := engine.Where("lf_user_uuid", resBody.UUID).And("config_uuid", "77a3460a-668c-4145-b20e-2e5dce7dae81").Get(ld)
+	bool, err := engine.Where("uuid=?", resBody.UUID).Get(ld)
 	if err != nil {
 		c.JSON(200, gin.H{"errCode": "error", "info": "engine.Where error " + fmt.Sprintf("%s", err)})
 		return
@@ -226,9 +231,8 @@ func (lt *LeifengTrend) RegisterTask(c *gin.Context) {
 		c.JSON(200, gin.H{"errCode": "error", "info": "请不要重复领取任务"})
 		return
 	}
-	ld.UUID = uuid.New().String()
-	ld.ConfigUUID = resBody.CUUID
-	ld.LfUerUUID = resBody.UUID
+	ld.UUID = resBody.UUID
+	ld.ConfigUUID = "77a3460a-668c-4145-b20e-2e5dce7dae81"
 	ld.Task = resBody.Task
 	_, err = engine.Insert(ld)
 	if err != nil {
@@ -266,13 +270,24 @@ func (lt *LeifengTrend) UpdataImage(c *gin.Context) {
 		c.JSON(200, gin.H{"errCode": "error", "info": "engine Sync2 error " + fmt.Sprintf("%s", err)})
 		return
 	}
-	ld.Task = resBody.Task
-	ld.ImageData = "resBody.ImageData"
-
-	_, err = engine.Where("lf_user_uuid", resBody.UUID).And("config_uuid", "77a3460a-668c-4145-b20e-2e5dce7dae81").Update(ld)
+	// ld.Task = resBody.Task
+	// ld.ImageData = "resBody.ImageData"
+	/*
+		_, err = engine.Where("lf_user_uuid", resBody.UUID).And("config_uuid", "77a3460a-668c-4145-b20e-2e5dce7dae81").Update(ld)
+		if err != nil {
+			x := fmt.Sprintf("%s", err)
+			c.JSON(200, gin.H{"errCode": "error", "info": "Insert error " + x})
+			return
+		}
+	*/
+	ddd, err := base64.StdEncoding.DecodeString(resBody.ImageData[23:]) //成图片文件并把文件写入到buffer
 	if err != nil {
-		x := fmt.Sprintf("%s", err)
-		c.JSON(200, gin.H{"errCode": "error", "info": "Insert error " + x})
+		c.JSON(200, gin.H{"errCode": "error", "info": "base64 error " + fmt.Sprintf("%s", err)})
+		return
+	}
+	err = ioutil.WriteFile("./img/"+resBody.UUID+".jpg", ddd, 0666)
+	if err != nil {
+		c.JSON(200, gin.H{"errCode": "error", "info": "wi error " + fmt.Sprintf("%s", err)})
 		return
 	}
 	c.JSON(200, gin.H{"errCode": "success"})
@@ -296,4 +311,15 @@ func componentaccesstoken() string {
 		return "error"
 	}
 	return str
+}
+
+func pathExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
 }
