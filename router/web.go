@@ -1,12 +1,16 @@
 package router
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/iphuket/gowc/app/controller"
 )
 
 var wctr = new(controller.WeChat)
 var lt = new(controller.LeifengTrend)
+var rc = new(controller.RepresentCat)
 
 // WEB ...
 func WEB(app *gin.Engine) {
@@ -18,6 +22,15 @@ func WEB(app *gin.Engine) {
 		wc.Any("auth_call", wctr.WeChat.AuthCall)
 		wc.Any("auth_url", wctr.WeChat.AuthURL)
 		wc.Any("test", wctr.WeChat.Test)
+	}
+	app.Delims("{{", "}}")
+	app.LoadHTMLFiles("tm/index.html")
+	rrc := app.Group("representcat")
+	{
+		rrc.StaticFS("img", gin.Dir("tm/img", true))
+		rrc.GET("page", rc.RepresentCatStart)
+		rrc.GET("oauth", rc.RepresentCatURL)
+		rrc.GET("call", rc.WeChatLoginCall)
 	}
 	rlt := app.Group("leifengtrend")
 	rlt.Use(mugdeda)
@@ -37,4 +50,8 @@ func WEB(app *gin.Engine) {
 func mugdeda(c *gin.Context) {
 	c.Header("access-control-allow-origin", "*")
 	c.Next()
+}
+func formatAsDate(t time.Time) string {
+	year, month, day := t.Date()
+	return fmt.Sprintf("%d%02d/%02d", year, month, day)
 }

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh">
+    <head>
+        <title>simple vote demo </title>
+        <style>
+            *{
+                margin:0;
+                padding: 0;
+                margin: 0px;
+				overflow: hidden;
+            }
+        </style>
+        <!-- dev -->
+        <script src="https://cdn.bootcss.com/pixi.js/4.8.6/pixi.js"></script>
+        <!-- min -->
+        <!--<script src="https://cdn.bootcss.com/pixi.js/4.8.6/pixi.min.js"></script>-->
+    </head>
+<body>
+    <script>
+        alert("{{.test}}")
+        var imgData = [
+            "./img/bg.jpg",
+            "./img/title0.png",
+            "./img/vs1.png",
+            "./img/vs2.png",
+            "./img/vs3.png",
+            "./img/btn.png",
+        ];
+        var updataURL = "";
+        var imgArr = [];
+        var uuidArr = [
+            "id1", // id1
+            "id2", // id2
+            "id3"  // id3
+        ];
+        var progressCount = 0;
+        (function(){
+            // SV 依赖于pixi.js 新手不喜请加油喷，aimo-x@oovmi.com
+            var app = new PIXI.Application(window.innerWidth, window.innerHeight, {backgroundColor : 0x000});
+                
+            var container = document.createElement( 'div' );
+                document.body.appendChild( container );
+                app.view.style.width=window.innerWidth;
+                app.view.style.height=window.innerHeight;
+                container.append(app.view)
+                // 提交投票数据
+                updata = (id) =>{
+                    console.log(uuidArr[id])
+                }
+                
+            class SV {  
+                constructor(){
+                    this.name = "simple vote"
+                    this.app = app;
+                }
+                
+                // 生成页面
+                generate (){
+                    // bg
+                    
+                    let bg = PIXI.Sprite.fromImage(imgData[0]);
+                        bg.width = window.innerWidth;
+                        bg.height = window.innerHeight;
+                    this.app.stage.addChild(bg);
+
+                    // title0 
+                    let title0 = PIXI.Sprite.fromImage(imgData[1]);
+                        title0.width =  window.innerWidth*0.711;
+                        title0.height = window.innerHeight*0.183;
+                        title0.x = window.innerWidth*0.144;
+                        title0.y = window.innerHeight*0.154;
+                    this.app.stage.addChild(title0);
+
+                    // vs 1-3 选项
+                    let vs1 = PIXI.Sprite.fromImage(imgData[2]);
+                        vs1.width =  window.innerWidth*0.173;
+                        vs1.height = window.innerHeight*0.149;
+                        vs1.x = window.innerWidth*0.161;
+                        vs1.y = window.innerHeight*0.381;
+                    this.app.stage.addChild(vs1);
+                    let vs2 = PIXI.Sprite.fromImage(imgData[3]);
+                        vs2.width =  window.innerWidth*0.209;
+                        vs2.height = window.innerHeight*0.163;
+                        vs2.x = window.innerWidth*0.161;
+                        vs2.y = window.innerHeight*0.553;
+                    this.app.stage.addChild(vs2);
+                    let vs3 = PIXI.Sprite.fromImage(imgData[4]);
+                        vs3.width =  window.innerWidth*0.27;
+                        vs3.height = window.innerHeight*0.16;
+                        vs3.x = window.innerWidth*0.125;
+                        vs3.y = window.innerHeight*0.748;
+                    this.app.stage.addChild(vs3);
+
+                    // btn 按钮组
+                    let btn1 = PIXI.Sprite.fromImage(imgData[5]);
+                        btn1.width =  window.innerWidth*0.202;
+                        btn1.height = window.innerHeight*0.12;
+                        btn1.x = window.innerWidth*0.556;
+                        btn1.y = window.innerHeight*0.395;
+                        // Opt-in to interactivity
+                        btn1.interactive = true;
+                        // Shows hand cursor
+                        btn1.buttonMode = true;
+                        // Pointers normalize touch and mouse
+                        btn1.on('touchstart', function (){
+                            btn1.alpha = 0.5;
+                        });
+                        btn1.on('touchend', function (){
+                            btn1.alpha = 1;
+                            updata(0)
+                        });
+                        
+                    this.app.stage.addChild(btn1);
+                    let btn2 = PIXI.Sprite.fromImage(imgData[5]);
+                        btn2.width =  window.innerWidth*0.202;
+                        btn2.height = window.innerHeight*0.12;
+                        btn2.x = window.innerWidth*0.556;
+                        btn2.y = window.innerHeight*0.574;
+                        btn2.interactive = true;
+                        // Shows hand cursor
+                        btn2.buttonMode = true;
+                        btn2.on('touchstart', function (){
+                            btn2.alpha = 0.5;
+                        });
+                        btn2.on('touchend', function (){
+                            btn2.alpha = 1;
+                            updata(1)
+                        });
+                    this.app.stage.addChild(btn2);
+                    let btn3 = PIXI.Sprite.fromImage(imgData[5]);
+                        btn3.width =  window.innerWidth*0.202;
+                        btn3.height = window.innerHeight*0.12;
+                        btn3.x = window.innerWidth*0.556;
+                        btn3.y = window.innerHeight*0.768;
+                        btn3.interactive = true;
+                        // Shows hand cursor
+                        btn3.buttonMode = true;
+                        btn3.on('touchstart', function (){
+                            btn3.alpha = 0.5;
+                        });
+                        btn3.on('touchend', function (){
+                            btn3.alpha = 1;
+                            updata(2)
+                        });
+                    this.app.stage.addChild(btn3);
+
+                return "start";
+                }
+            }
+            // sv 载入投票类 simple vote
+            var sv = new SV();
+            loadImg = () => {
+                // 遍历图像
+                for (let i = 0; i<imgData.length; i++){
+                        fetch(imgData[i])
+                        .then(function(response) {
+                            return response.blob();
+                        })
+                        .then(function(myBlob) {
+                            var objectURL = URL.createObjectURL(myBlob);
+                                imgArr[i] =  new Image;
+                                imgArr[i].src = objectURL;
+                                imgArr[i].onload = function (){
+                                    // 加载完成
+                                    progressCount++;
+                                    console.log(progressCount)
+                                    // 所有图片加载完成 开始生成页面
+                                    if (i === imgData.length-1) console.log(sv.generate())
+                                }
+                                imgArr[i].onerror = function (){
+                                    // img load 出现错误
+                                    console.log("img load error " + imgArr[i].src);
+                                }
+                        }).catch(function(e) {
+                            // fetch 出现错误
+                            console.log("fetch error " + e);
+                        });
+                    }
+            }
+            window.onload=function(){
+                loadImg();
+            }
+        }() 
+        )
+        
+    </script>
+</body>
+</html>

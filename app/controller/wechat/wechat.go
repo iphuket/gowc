@@ -27,7 +27,7 @@ const (
 	ComponentloginPageURL = "https://mp.weixin.qq.com/cgi-bin/componentloginpage?component_appid=%s&pre_auth_code=%s&redirect_uri=%s&auth_type=3"
 )
 
-var memCache = cache.NewMemcache("127.0.0.1:11211")
+var memCache = cache.NewMemory()
 
 // cvt 专有缓存
 var ca = new(config.Cache)
