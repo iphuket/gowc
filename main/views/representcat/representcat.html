@@ -217,9 +217,12 @@
                         app.stage.removeChild(btn1)
                         app.stage.removeChild(btn2)
                         app.stage.removeChild(btn3)
-                        
+                        var count_sum = 0;
                         for (let i =0; i < data.length; i++ ){
                             console.log(i, data[i].Count)
+                            // sum
+                            count_sum += data[i].Count;
+                            
                         }
                         swal.close()
                     }
