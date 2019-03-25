@@ -24,13 +24,15 @@ func WEB(app *gin.Engine) {
 		wc.Any("test", wctr.WeChat.Test)
 	}
 	app.Delims("{{", "}}")
-	app.LoadHTMLFiles("tm/index.html")
+	app.LoadHTMLGlob("views/**/*")
 	rrc := app.Group("representcat")
 	{
-		rrc.StaticFS("img", gin.Dir("tm/img", true))
+		rrc.StaticFS("img", gin.Dir("statics/representcat/img", true))
 		rrc.GET("page", rc.RepresentCatStart)
 		rrc.GET("oauth", rc.RepresentCatURL)
 		rrc.GET("call", rc.WeChatLoginCall)
+		rrc.GET("config", rc.RepresentCatConfig)
+		rrc.POST("vote", rc.RepresentCatVote)
 	}
 	rlt := app.Group("leifengtrend")
 	rlt.Use(mugdeda)
