@@ -1,23 +1,33 @@
 <!DOCTYPE html>
 <html lang="zh">
     <head>
-        <title>simple vote demo </title>
+        <title> 有奖投票 | 《创造喵零喵》，谁能C位出道？ </title>
+        <meta name="viewport" content="width=device-width,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
         <style>
-            *{
+            html,body{
                 margin:0;
                 padding: 0;
                 margin: 0px;
 				overflow: hidden;
             }
+            .swal-loading {
+                background-color: rgba(0,0,0,0);
+                color:#ffffff;
+            }
+            .swal-text {
+                color: rgba(200,200,200,1);
+            }
+            
         </style>
         <!-- dev -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.8.2/pixi.min.js"></script>
         <!-- min -->
         <!--<script src="https://cdn.bootcss.com/pixi.js/4.8.6/pixi.min.js"></script>-->
     </head>
 <body>
     <script>
-            
+        var test;
         var imgData = [
             "./img/bg.jpg",
             "./img/title0.png",
@@ -33,34 +43,93 @@
             "id2", // id2
             "id3"  // id3
         ];
-        var progressCount = 0;
+        var progressCount = 0, Wapp;
         (function(){
-            // SV 依赖于pixi.js 新手不喜请加油喷，aimo-x@oovmi.com
-            var app = new PIXI.Application(window.innerWidth, window.innerHeight, {backgroundColor : 0x000});
+            // 提交投票数据
+           
+            updata = (id) =>{
                 
-            var container = document.createElement( 'div' );
-                document.body.appendChild( container );
-                app.view.style.width=window.innerWidth;
-                app.view.style.height=window.innerHeight;
-                container.append(app.view)
-                // 提交投票数据
-                updata = (id) =>{
-                    console.log(uuidArr[id])
-                }
-                
+                var rcv_uuid = [
+                        "c80583aa-13ac-45c3-9689-0faa6664d880",
+                        "8d3d3f0a-a535-4778-b57b-35ed751a272d",
+                        "6701c3ea-52d5-4afc-b437-0280b76b9d8a"
+                    ];
+                    var rcc_uuid = Param("rcc_uuid"), rcu_uuid = Param("rcu_uuid");
+                    console.log("rcc_uuid: " + rcc_uuid)
+                    console.log("rcu_uuid: " + rcu_uuid)
+                    console.log("rcv_uuid: " + rcv_uuid[id])
+                    // 开始加载
+                    swal({
+                        text: "开始加载",
+                        button: false,
+                        closeOnClickOutside: false,
+                        className: "swal-loading",
+                    });                   
+                    fetch('https://gowc.iuu.pub/representcat/vote?do=add&rcc_uuid=' + rcc_uuid + '&rcv_uuid='+ rcv_uuid[id] + '&rcu_uuid=' + rcu_uuid)
+                    .then(res => res.json())
+                    .then((data) => {
+                        console.log(`data = \n`, data)
+                        test = data;
+                        if( data.errCode == "success" ){
+                                //投票成功 {"errcode":"success","data":[{"name":"xxx","count":int64}]}
+                                ctr(data.data)
+                        }else{
+                            swal( "错误", data.info, "error" ).then((e) => {
+                                location.reload(false)
+                            })
+                        }
+                    })
+                    
+                    /*
+                    .catch((error) => {
+                        console.log('Error:', error)
+                        swal( "服务器错误", "", "error" ).then(e => {
+                            location.reload(false)
+                        })
+                    })
+                    .then( data => {
+                        // 解析取得各个项目的票数
+                        console.log("data", data)
+                        var obj = JSON.parse(data);
+                            if( obj.errcode == "success" ){
+                                //投票成功 {"errcode":"success","data":[{"name":"xxx","count":int64}]}
+                                ctr(obj.data)
+                            }else{
+                                swal( "错误", obj.info, "error" ).then(e => {
+                                    location.reload(false)
+                                })
+                            }
+                    }).catch( error => {
+                        console.log("catch: ", error)
+                        swal( "服务器错误", "error",  "error" ).then(e => {
+                            location.reload(false)
+                        })
+                    });
+                    */
+            };
             class SV {  
                 constructor(){
-                    this.name = "simple vote"
-                    this.app = app;
+                    this.name = "测试"
                 }
-                
+                // v_init
+                v_init(){
+                    // SV 依赖于pixi.js 新手不喜请加油喷，aimo-x@oovmi.com
+                    var app = new PIXI.Application(window.innerWidth, window.innerHeight, {backgroundColor : 0x000});
+                    var container = document.createElement( 'div' );
+                        document.body.appendChild( container );
+                        app.view.style.width=window.innerWidth;
+                        app.view.style.height=window.innerHeight;
+                        container.append(app.view);
+                        Wapp = app;
+                        return app
+                }
                 // 生成页面
-                generate (){
+                generate (app){
                     // bg
                     let bg = PIXI.Sprite.fromImage(imgData[0]);
                         bg.width = window.innerWidth;
                         bg.height = window.innerHeight;
-                    this.app.stage.addChild(bg);
+                    app.stage.addChild(bg);
 
                     // title0 
                     let title0 = PIXI.Sprite.fromImage(imgData[1]);
@@ -68,7 +137,7 @@
                         title0.height = window.innerHeight*0.183;
                         title0.x = window.innerWidth*0.144;
                         title0.y = window.innerHeight*0.154;
-                    this.app.stage.addChild(title0);
+                    app.stage.addChild(title0);
 
                     // vs 1-3 选项
                     let vs1 = PIXI.Sprite.fromImage(imgData[2]);
@@ -76,19 +145,19 @@
                         vs1.height = window.innerHeight*0.149;
                         vs1.x = window.innerWidth*0.161;
                         vs1.y = window.innerHeight*0.381;
-                    this.app.stage.addChild(vs1);
+                    app.stage.addChild(vs1);
                     let vs2 = PIXI.Sprite.fromImage(imgData[3]);
                         vs2.width =  window.innerWidth*0.209;
                         vs2.height = window.innerHeight*0.163;
                         vs2.x = window.innerWidth*0.161;
                         vs2.y = window.innerHeight*0.553;
-                    this.app.stage.addChild(vs2);
+                    app.stage.addChild(vs2);
                     let vs3 = PIXI.Sprite.fromImage(imgData[4]);
                         vs3.width =  window.innerWidth*0.27;
                         vs3.height = window.innerHeight*0.16;
                         vs3.x = window.innerWidth*0.125;
                         vs3.y = window.innerHeight*0.748;
-                    this.app.stage.addChild(vs3);
+                    app.stage.addChild(vs3);
 
                     // btn 按钮组
                     let btn1 = PIXI.Sprite.fromImage(imgData[5]);
@@ -109,7 +178,7 @@
                             updata(0)
                         });
                         
-                    this.app.stage.addChild(btn1);
+                    app.stage.addChild(btn1);
                     let btn2 = PIXI.Sprite.fromImage(imgData[5]);
                         btn2.width =  window.innerWidth*0.202;
                         btn2.height = window.innerHeight*0.12;
@@ -125,7 +194,7 @@
                             btn2.alpha = 1;
                             updata(1)
                         });
-                    this.app.stage.addChild(btn2);
+                    app.stage.addChild(btn2);
                     let btn3 = PIXI.Sprite.fromImage(imgData[5]);
                         btn3.width =  window.innerWidth*0.202;
                         btn3.height = window.innerHeight*0.12;
@@ -141,9 +210,21 @@
                             btn3.alpha = 1;
                             updata(2)
                         });
-                    this.app.stage.addChild(btn3);
-
-                return "start";
+                    app.stage.addChild(btn3);
+                    var vote_Arr = []
+                    window.ctr = (data) => {
+                        // 删除btn
+                        app.stage.removeChild(btn1)
+                        app.stage.removeChild(btn2)
+                        app.stage.removeChild(btn3)
+                        
+                        for (let i =0; i < data.length; i++ ){
+                            console.log(i, data[i].Count)
+                        }
+                        swal.close()
+                    }
+                    
+                    return "start";
                 }
             }
             // sv 载入投票类 simple vote
@@ -164,7 +245,7 @@
                                     progressCount++;
                                     console.log(progressCount)
                                     // 所有图片加载完成 开始生成页面
-                                    if (i === imgData.length-1) console.log(sv.generate())
+                                    if (i === imgData.length-1) console.log(sv.generate(sv.v_init()))
                                 }
                                 imgArr[i].onerror = function (){
                                     // img load 出现错误

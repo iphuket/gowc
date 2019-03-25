@@ -43,7 +43,7 @@ const (
 // RepresentCatStart ...
 func (rc *RepresentCat) RepresentCatStart(c *gin.Context) {
 
-	c.HTML(http.StatusOK, "index.html", map[string]interface{}{"test": "test"})
+	c.HTML(http.StatusOK, "representcat.html", map[string]interface{}{"test": "test"})
 	//c.Writer.WriteString("ok")
 }
 
@@ -238,11 +238,45 @@ func (rc *RepresentCat) RepresentCatConfig(c *gin.Context) {
 
 // RepresentCatVote 投票
 func (rc *RepresentCat) RepresentCatVote(c *gin.Context) {
-	do, rcvUUID, rccUUID, rcuUUID := c.Request.FormValue("add"), c.Request.FormValue("rcv_uuid"), c.Request.FormValue("rcc_uuid"), c.Request.FormValue("rcu_uuid")
+	do, rcvUUID, rccUUID, rcuUUID := c.Request.FormValue("do"), c.Request.FormValue("rcv_uuid"), c.Request.FormValue("rcc_uuid"), c.Request.FormValue("rcu_uuid")
 	if len(do) < 1 || len(rcvUUID) < 1 || len(rccUUID) < 1 || len(rcuUUID) < 1 {
 		c.JSON(http.StatusOK, gin.H{"errCode": "error", "info": "not find do, rcv_uuid, rcc_uuid, rcu_uuid"})
-		c.Abort()
+		return
 	}
+	// 防止重复投票 需要先查询用户是否已投票
+	db := new(config.DB)
+	engine, err := db.NewEngine()
+	if err != nil {
+		fmt.Println(err)
+		x := fmt.Sprintf("%s", err)
+		c.JSON(200, gin.H{"errCode": "error", "info": "new engine error " + x})
+		return
+	}
+	user := new(RcUser)
+	err = engine.Sync2(user)
+	if err != nil {
+		x := fmt.Sprintf("%s", err)
+		c.JSON(200, gin.H{"errCode": "error", "info": "engine Sync2 error " + x})
+		return
+	}
+	// 防止重复投票 需要先查询
+	bool, err := engine.Where("uuid = ? AND config_uuid = ?", rcuUUID, rccUUID).Get(user)
+	if err != nil {
+		x := fmt.Sprintf("%s", err)
+		c.JSON(200, gin.H{"errCode": "error", "info": "engine.Where error " + x})
+		return
+	} else if bool {
+		// 用户存在进入下一步 判断
+		if len(user.VoteUUID) > 1 {
+			c.JSON(200, gin.H{"errCode": "error", "info": "Don't repeat your vote"})
+			return
+		}
+		voteP(c, rcvUUID, rccUUID)
+		return
+	}
+	c.JSON(200, gin.H{"errCode": "error", "info": "unknown error or rcu_uuid not find"})
+}
+func voteP(c *gin.Context, rcvUUID, rccUUID string) {
 	rcv := new(RcVote)
 	db := new(config.DB)
 	engine, err := db.NewEngine()
@@ -258,7 +292,6 @@ func (rc *RepresentCat) RepresentCatVote(c *gin.Context) {
 		c.JSON(200, gin.H{"errCode": "error", "info": "engine Sync2 error " + x})
 		return
 	}
-	// 防止重复投票 需要先查询
 	bool, err := engine.Where("uuid = ? AND config_uuid = ?", rcvUUID, rccUUID).Get(rcv)
 	if err != nil {
 		x := fmt.Sprintf("%s", err)
@@ -266,9 +299,42 @@ func (rc *RepresentCat) RepresentCatVote(c *gin.Context) {
 		return
 	} else if bool {
 		// 存在 即可以进行投票 更新票数
-
+		rcv.Count = rcv.Count + 1
+		affected, err := engine.Where("uuid = ? AND config_uuid = ?", rcvUUID, rccUUID).Update(rcv)
+		if err != nil {
+			x := fmt.Sprintf("%s", err)
+			c.JSON(200, gin.H{"errCode": "error", "info": "engine.Where error " + x})
+			return
+		}
+		if affected < 0 {
+			c.JSON(200, gin.H{"errCode": "error", "info": "update error affected = 0"})
+			return
+		}
+		data, err := voteCount(rccUUID)
+		if err != nil {
+			fmt.Println("res data error ", err)
+			c.JSON(200, gin.H{"errCode": "error", "info": "res data error", "error": fmt.Sprintf("%s", err)})
+			return
+		}
+		fmt.Println(data)
+		c.JSON(200, gin.H{"errCode": "success", "data": data})
+		return
 	}
-
+	c.JSON(200, gin.H{"errCode": "error", "info": "not find rcv_uuid, rcc_uuid"})
+	return
+}
+func voteCount(rccUUID string) ([]RcVote, error) {
+	var rcv []RcVote
+	db := new(config.DB)
+	engine, err := db.NewEngine()
+	if err != nil {
+		return nil, err
+	}
+	err = engine.Where("config_uuid = ?", rccUUID).Find(&rcv)
+	if err != nil {
+		return nil, err
+	}
+	return rcv, nil
 }
 
 var ca = new(config.Cache)

@@ -32,7 +32,7 @@ func WEB(app *gin.Engine) {
 		rrc.GET("oauth", rc.RepresentCatURL)
 		rrc.GET("call", rc.WeChatLoginCall)
 		rrc.GET("config", rc.RepresentCatConfig)
-		rrc.POST("vote", rc.RepresentCatVote)
+		rrc.GET("vote", rc.RepresentCatVote)
 	}
 	rlt := app.Group("leifengtrend")
 	rlt.Use(mugdeda)
