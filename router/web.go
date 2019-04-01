@@ -33,6 +33,7 @@ func WEB(app *gin.Engine) {
 		rrc.GET("call", rc.WeChatLoginCall)
 		rrc.GET("config", rc.RepresentCatConfig)
 		rrc.GET("vote", rc.RepresentCatVote)
+		rrc.GET("getdata", rc.RepresentCatGetData)
 	}
 	rlt := app.Group("leifengtrend")
 	rlt.Use(mugdeda)

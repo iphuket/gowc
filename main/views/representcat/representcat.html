@@ -27,6 +27,9 @@
     </head>
 <body>
     <script>
+        // 替换 wiw / window.innerWidth wih / 
+        var wiw = 640;
+        var wih = 1138; 
         var test;
         var imgData = [
             "./img/bg.jpg",
@@ -35,21 +38,17 @@
             "./img/vs2.png",
             "./img/vs3.png",
             "./img/btn.png",
+            "./img/ballotbg.png",
+            "./img/ballotcolumn.png"
         ];
         var updataURL = "";
         var imgArr = [];
-        var uuidArr = [
-            "id1", // id1
-            "id2", // id2
-            "id3"  // id3
-        ];
         var progressCount = 0, Wapp;
         (function(){
             // 提交投票数据
-           
+            
             updata = (id) =>{
-                
-                var rcv_uuid = [
+                    var rcv_uuid = [
                         "c80583aa-13ac-45c3-9689-0faa6664d880",
                         "8d3d3f0a-a535-4778-b57b-35ed751a272d",
                         "6701c3ea-52d5-4afc-b437-0280b76b9d8a"
@@ -71,41 +70,48 @@
                         console.log(`data = \n`, data)
                         test = data;
                         if( data.errCode == "success" ){
-                                //投票成功 {"errcode":"success","data":[{"name":"xxx","count":int64}]}
-                                ctr(data.data)
+                            swal.close()
+                            //投票成功 {"errcode":"success","data":[{"name":"xxx","count":int64}]}
+                            ctr(data.data)
+                            // 延迟数秒执行抽奖任务
+                            setTimeout(()=>{
+                                swal({
+                                    text: "投票完成是否前往抽奖！",
+                                    buttons: {
+                                        confirm: "好的",
+                                        roll: {
+                                        text: "取消",
+                                        value: false,
+                                        },
+                                    },
+                                }).then(t=>{
+                                    console.log(t)
+                                    if(t){
+                                        window.location.href = "https://hd.faisco.cn/13586304/wKAakKsKdo4AoorKZgGYuQ/load.html?style=75";
+                                    }
+                                })
+                            },2500)
                         }else{
                             swal( "错误", data.info, "error" ).then((e) => {
-                                location.reload(false)
+                                swal({
+                                    text: "是否前往抽奖！",
+                                    buttons: {
+                                        confirm: "好的",
+                                        roll: {
+                                        text: "取消",
+                                        value: false,
+                                        },
+                                    },
+                                }).then(t=>{
+                                    console.log(t)
+                                    ctr(data.data)
+                                    if(t){
+                                        window.location.href = "https://hd.faisco.cn/13586304/wKAakKsKdo4AoorKZgGYuQ/load.html?style=75";
+                                    }
+                                })
                             })
                         }
                     })
-                    
-                    /*
-                    .catch((error) => {
-                        console.log('Error:', error)
-                        swal( "服务器错误", "", "error" ).then(e => {
-                            location.reload(false)
-                        })
-                    })
-                    .then( data => {
-                        // 解析取得各个项目的票数
-                        console.log("data", data)
-                        var obj = JSON.parse(data);
-                            if( obj.errcode == "success" ){
-                                //投票成功 {"errcode":"success","data":[{"name":"xxx","count":int64}]}
-                                ctr(obj.data)
-                            }else{
-                                swal( "错误", obj.info, "error" ).then(e => {
-                                    location.reload(false)
-                                })
-                            }
-                    }).catch( error => {
-                        console.log("catch: ", error)
-                        swal( "服务器错误", "error",  "error" ).then(e => {
-                            location.reload(false)
-                        })
-                    });
-                    */
             };
             class SV {  
                 constructor(){
@@ -114,11 +120,11 @@
                 // v_init
                 v_init(){
                     // SV 依赖于pixi.js 新手不喜请加油喷，aimo-x@oovmi.com
-                    var app = new PIXI.Application(window.innerWidth, window.innerHeight, {backgroundColor : 0x000});
+                    var app = new PIXI.Application(wiw, wih, {backgroundColor : 0x000});
                     var container = document.createElement( 'div' );
                         document.body.appendChild( container );
-                        app.view.style.width=window.innerWidth;
-                        app.view.style.height=window.innerHeight;
+                        app.view.style.width= window.innerWidth + "px";
+                        app.view.style.height= window.innerHeight + "px";
                         container.append(app.view);
                         Wapp = app;
                         return app
@@ -127,44 +133,44 @@
                 generate (app){
                     // bg
                     let bg = PIXI.Sprite.fromImage(imgData[0]);
-                        bg.width = window.innerWidth;
-                        bg.height = window.innerHeight;
+                        bg.width = wiw;
+                        bg.height = wih;
                     app.stage.addChild(bg);
 
                     // title0 
                     let title0 = PIXI.Sprite.fromImage(imgData[1]);
-                        title0.width =  window.innerWidth*0.711;
-                        title0.height = window.innerHeight*0.183;
-                        title0.x = window.innerWidth*0.144;
-                        title0.y = window.innerHeight*0.154;
+                        title0.width =  wiw*0.711;
+                        title0.height = wih*0.183;
+                        title0.x = wiw*0.144;
+                        title0.y = wih*0.154;
                     app.stage.addChild(title0);
 
                     // vs 1-3 选项
                     let vs1 = PIXI.Sprite.fromImage(imgData[2]);
-                        vs1.width =  window.innerWidth*0.173;
-                        vs1.height = window.innerHeight*0.149;
-                        vs1.x = window.innerWidth*0.161;
-                        vs1.y = window.innerHeight*0.381;
+                        vs1.width =  wiw*0.173;
+                        vs1.height = wih*0.149;
+                        vs1.x = wiw*0.161;
+                        vs1.y = wih*0.381;
                     app.stage.addChild(vs1);
                     let vs2 = PIXI.Sprite.fromImage(imgData[3]);
-                        vs2.width =  window.innerWidth*0.209;
-                        vs2.height = window.innerHeight*0.163;
-                        vs2.x = window.innerWidth*0.161;
-                        vs2.y = window.innerHeight*0.553;
+                        vs2.width =  wiw*0.209;
+                        vs2.height = wih*0.163;
+                        vs2.x = wiw*0.161;
+                        vs2.y = wih*0.553;
                     app.stage.addChild(vs2);
                     let vs3 = PIXI.Sprite.fromImage(imgData[4]);
-                        vs3.width =  window.innerWidth*0.27;
-                        vs3.height = window.innerHeight*0.16;
-                        vs3.x = window.innerWidth*0.125;
-                        vs3.y = window.innerHeight*0.748;
+                        vs3.width =  wiw*0.27;
+                        vs3.height = wih*0.16;
+                        vs3.x = wiw*0.125;
+                        vs3.y = wih*0.748;
                     app.stage.addChild(vs3);
 
                     // btn 按钮组
                     let btn1 = PIXI.Sprite.fromImage(imgData[5]);
-                        btn1.width =  window.innerWidth*0.202;
-                        btn1.height = window.innerHeight*0.12;
-                        btn1.x = window.innerWidth*0.556;
-                        btn1.y = window.innerHeight*0.395;
+                        btn1.width =  wiw*0.202;
+                        btn1.height = wih*0.12;
+                        btn1.x = wiw*0.556;
+                        btn1.y = wih*0.395;
                         // Opt-in to interactivity
                         btn1.interactive = true;
                         // Shows hand cursor
@@ -180,10 +186,10 @@
                         
                     app.stage.addChild(btn1);
                     let btn2 = PIXI.Sprite.fromImage(imgData[5]);
-                        btn2.width =  window.innerWidth*0.202;
-                        btn2.height = window.innerHeight*0.12;
-                        btn2.x = window.innerWidth*0.556;
-                        btn2.y = window.innerHeight*0.574;
+                        btn2.width =  wiw*0.202;
+                        btn2.height = wih*0.12;
+                        btn2.x = wiw*0.556;
+                        btn2.y = wih*0.574;
                         btn2.interactive = true;
                         // Shows hand cursor
                         btn2.buttonMode = true;
@@ -196,10 +202,10 @@
                         });
                     app.stage.addChild(btn2);
                     let btn3 = PIXI.Sprite.fromImage(imgData[5]);
-                        btn3.width =  window.innerWidth*0.202;
-                        btn3.height = window.innerHeight*0.12;
-                        btn3.x = window.innerWidth*0.556;
-                        btn3.y = window.innerHeight*0.768;
+                        btn3.width =  wiw*0.202;
+                        btn3.height = wih*0.12;
+                        btn3.x = wiw*0.556;
+                        btn3.y = wih*0.768;
                         btn3.interactive = true;
                         // Shows hand cursor
                         btn3.buttonMode = true;
@@ -211,22 +217,151 @@
                             updata(2)
                         });
                     app.stage.addChild(btn3);
+                    
+
+                    app.ticker.add(function(delta) {
+                    // 动画和遮罩
+                       
+                        
+                    });
                     var vote_Arr = []
                     window.ctr = (data) => {
                         // 删除btn
                         app.stage.removeChild(btn1)
                         app.stage.removeChild(btn2)
                         app.stage.removeChild(btn3)
+                        // 进度
+                        let ballotcolumn = [];
+                        // 遮罩
+                        let ballotcolumnMask = [];
+                            ballotcolumn[0] = PIXI.Sprite.fromImage(imgData[7]);
+                            ballotcolumn[0].width =  wiw*0.406;
+                            ballotcolumn[0].height = wih*0.018;
+                            ballotcolumn[0].x = wiw*0.427;
+                            ballotcolumn[0].y = wih*0.431;
+                        app.stage.addChild(ballotcolumn[0]);
+
+                            ballotcolumnMask[0] = PIXI.Sprite.fromImage(imgData[7]);
+                            ballotcolumnMask[0].width =  wiw*0;
+                            ballotcolumnMask[0].height = wih*0.018;
+                            ballotcolumnMask[0].x = wiw*0.427;
+                            ballotcolumnMask[0].y = wih*0.431;
+                        app.stage.addChild(ballotcolumnMask[0]);
+                        // 设置遮罩0
+                        ballotcolumn[0].mask = ballotcolumnMask[0]
+
+                            ballotcolumn[1] = PIXI.Sprite.fromImage(imgData[7]);
+                            ballotcolumn[1].width =  wiw*0.406;
+                            ballotcolumn[1].height = wih*0.018;
+                            ballotcolumn[1].x = wiw*0.427;
+                            ballotcolumn[1].y = wih*0.612;
+                        app.stage.addChild(ballotcolumn[1]);
+                        
+                            ballotcolumnMask[1] = PIXI.Sprite.fromImage(imgData[7]);
+                            ballotcolumnMask[1].width =  wiw*0;
+                            ballotcolumnMask[1].height = wih*0.018;
+                            ballotcolumnMask[1].x = wiw*0.427;
+                            ballotcolumnMask[1].y = wih*0.612;
+                        app.stage.addChild(ballotcolumnMask[1]);
+                        // 设置遮罩1
+                        ballotcolumn[1].mask = ballotcolumnMask[1]
+
+                            ballotcolumn[2] = PIXI.Sprite.fromImage(imgData[7]);
+                            ballotcolumn[2].width =  wiw*0.406;
+                            ballotcolumn[2].height = wih*0.018;
+                            ballotcolumn[2].x = wiw*0.427;
+                            ballotcolumn[2].y = wih*0.802;
+                        app.stage.addChild(ballotcolumn[2]);
+                        
+                            ballotcolumnMask[2] = PIXI.Sprite.fromImage(imgData[7]);
+                            ballotcolumnMask[2].width =  wiw*0;
+                            ballotcolumnMask[2].height = wih*0.018;
+                            ballotcolumnMask[2].x = wiw*0.427;
+                            ballotcolumnMask[2].y = wih*0.802;
+                        app.stage.addChild(ballotcolumnMask[2]);
+                        // 设置遮罩2
+                        ballotcolumn[2].mask = ballotcolumnMask[2]
+
+                        // 框0
+                        let ballotbg1 = PIXI.Sprite.fromImage(imgData[6]);
+                            ballotbg1.width =  wiw*0.406;
+                            ballotbg1.height = wih*0.021;
+                            ballotbg1.x = wiw*0.427;
+                            ballotbg1.y = wih*0.43;
+                        app.stage.addChild(ballotbg1);
+                        
+                        let ballotbg2 = PIXI.Sprite.fromImage(imgData[6]);
+                            ballotbg2.width =  wiw*0.406;
+                            ballotbg2.height = wih*0.021;
+                            ballotbg2.x = wiw*0.427;
+                            ballotbg2.y = wih*0.61;
+                        app.stage.addChild(ballotbg2);
+
+                        let ballotbg3 = PIXI.Sprite.fromImage(imgData[6]);
+                            ballotbg3.width =  wiw*0.406;
+                            ballotbg3.height = wih*0.021;
+                            ballotbg3.x = wiw*0.427;
+                            ballotbg3.y = wih*0.8;
+                        app.stage.addChild(ballotbg3);
+
+                        // 票数text
+                        let ballotcolumnText = [];
+                            
                         var count_sum = 0;
                         for (let i =0; i < data.length; i++ ){
                             console.log(i, data[i].Count)
-                            // sum
                             count_sum += data[i].Count;
-                            
+                            ballotcolumnText[i] = new PIXI.Text(data[i].Count + "票",{fontFamily : 'Arial', fontSize: 26});
+                            ballotcolumnText[i].x = wiw*0.427;
+                            ballotcolumnText[i].y = wih*0.458 + i*(wih*0.18);
+                            app.stage.addChild(ballotcolumnText[i]);
                         }
-                        swal.close()
+                        for (let i = 0; i <  ballotcolumnMask.length; i++ ){
+                            ballotcolumnMask[i].width = (data[i].Count/count_sum)*(wiw*0.406)
+                        }
+                        
+                        
+
                     }
+                    var rcv_uuid = [
+                        "c80583aa-13ac-45c3-9689-0faa6664d880",
+                        "8d3d3f0a-a535-4778-b57b-35ed751a272d",
+                        "6701c3ea-52d5-4afc-b437-0280b76b9d8a"
+                    ];
+                    var rcc_uuid = Param("rcc_uuid"), rcu_uuid = Param("rcu_uuid");
+                    console.log("rcc_uuid: " + rcc_uuid)
+                    console.log("rcu_uuid: " + rcu_uuid)
+                    console.log("rcv_uuid: " + rcv_uuid[0])
+                    fetch('https://gowc.iuu.pub/representcat/getdata?do=add&rcc_uuid=' + rcc_uuid + '&rcv_uuid='+ rcv_uuid[0] + '&rcu_uuid=' + rcu_uuid)
+                    .then(res => res.json())
+                    .then((data) => {
+                        console.log(`data = \n`, data)
+                        test = data;
+                        swal.close()
+                        if( data.errCode == "success" ){
+                            ctr(data.data)
+                            
+                            setTimeout(()=>{
+                                    swal({
+                                        text: "您已经投票过了是否前往抽奖！",
+                                        buttons: {
+                                            confirm: "好的",
+                                            roll: {
+                                            text: "取消",
+                                            value: false,
+                                            },
+                                        },
+                                    }).then(t=>{
+                                        console.log(t)
+                                        ctr(data.data)
+                                        if(t){
+                                            window.location.href = "https://hd.faisco.cn/13586304/wKAakKsKdo4AoorKZgGYuQ/load.html?style=75";
+                                        }
+                                    })
+                            },2000)
+                        }
                     
+                    })
                     return "start";
                 }
             }
@@ -261,6 +396,12 @@
                     }
             }
             window.onload=function(){
+                swal({
+                        text: "开始加载",
+                        button: false,
+                        closeOnClickOutside: false,
+                        className: "swal-loading",
+                    }); 
                 Param = (name) =>{
                     let reg = new RegExp("(^|&)"+ name +"=([^&]*)(&|$)");
                     let r = window.location.search.substr(1).match(reg);
@@ -275,7 +416,7 @@
                 }else{
                     if(!Param("rcu_uuid")){
                         console.log("not u_uuid go oauth")
-                        window.location.href = "//gowc.iuu.pub/representcat/oauth/?rcc_uuid=" + Param("rcc_uuid");
+                        window.location.href = "https://gowc.iuu.pub/representcat/oauth/?rcc_uuid=" + Param("rcc_uuid");
                     }else{
                         loadImg();
                         console.log("rcu_uuid: " + Param("rcu_uuid"))
