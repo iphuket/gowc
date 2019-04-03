@@ -1,2 +1,2 @@
 # gowc
-gowc
+gowc test
