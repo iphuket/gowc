@@ -7,8 +7,9 @@ import (
 )
 
 // Start GinApp
-func Start() {
+func Start(port string) {
 	GinApp := gin.Default()
 	GinApp.Use(middleware.GOWC)
 	router.WEB(GinApp)
+	GinApp.Run(port)
 }

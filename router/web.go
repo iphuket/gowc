@@ -46,8 +46,8 @@ func WEB(app *gin.Engine) {
 		// https://gowc.iuu.pub/leifengtrend/img/
 		rlt.StaticFS("img", gin.Dir("./img", true))
 	}
-	go app.RunTLS(":443", "./1885284_gowc.iuu.pub.pem", "./1885284_gowc.iuu.pub.key")
-	app.Run(":80")
+	// go app.RunTLS(":443", "./1885284_gowc.iuu.pub.pem", "./1885284_gowc.iuu.pub.key")
+
 }
 
 func mugdeda(c *gin.Context) {
